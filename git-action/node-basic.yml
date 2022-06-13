@@ -1,0 +1,32 @@
+# 파일 위치 root 경로에 .github/workflows/
+name: Node.js CI
+
+# git-action이 실행되는 이벤트 설정
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+  # schedule: # cron으로 스케줄 작업 가능
+  # - cron: '0 0 * * *'
+
+# 실행 되는 작업, 여러개 있을 때는 병렬 실행
+jobs:
+  build: # 작업 이름
+    runs-on: ubuntu-latest # 어떤 OS에서 실행 되는지 선택
+
+    strategy: # strategy - matrix 사용하는 tool의 버전 선택
+      matrix:
+        node-version: [12.x, 14.x, 16.x]
+
+    steps: # Task의 집합 순차 진행
+      - uses: actions/checkout@v3 # 어떤 액션을 사용할지, 만들어진 액션이 있을 때만
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test

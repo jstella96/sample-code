@@ -1,0 +1,40 @@
+# 파일 위치 root 경로에 .github/workflows/
+name: Docker Hub
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 16.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: source npm install
+        run: npm install
+
+      - name: dockerhub login
+        run: echo ${{ secrets.DK_DOCKERHUB_PW }} | docker login -u ${{ secrets.DK_DOCKERHUB_ID }} --password-stdin
+
+      - name: Dockerfile copy
+        run: cp ./.pm2/Dockerfile ./
+
+      - name: pm2 file copy
+        run: cp ./.pm2/pm2.json ./
+
+      - name: docker image make
+        run: docker build -t docker_user_id/docker_image_name:tag .
+
+      - name: docker push
+        run: docker push docker_user_id/docker_image_name:tag
